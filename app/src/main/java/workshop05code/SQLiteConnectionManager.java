@@ -119,49 +119,54 @@ public class SQLiteConnectionManager {
         }
     }
 
+/**
+ * Take an id and a word and store the pair in the valid words
+ *
+ * @param id   the unique id for the word
+ * @param word the word to store
+ */
+public void addValidWord(int id, String word) {
+    String sql = "INSERT INTO validWords(id, word) VALUES(?, ?)";
+
+    try (Connection conn = DriverManager.getConnection(databaseURL);
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setInt(1, id);
+        pstmt.setString(2, word);
+        pstmt.executeUpdate();
+
+    } catch (SQLException e) {
+        System.out.println(e.getMessage());
+    }
+}
+
+
     /**
-     * Take an id and a word and store the pair in the valid words
-     * 
-     * @param id   the unique id for the word
-     * @param word the word to store
-     */
-    public void addValidWord(int id, String word) {
+ * Check if a word exists in the valid words table
+ *
+ * @param guess the string to check if it is a valid word.
+ * @return true if guess exists in the database, false otherwise
+ */
+public boolean isValidWord(String guess) {
+    String sql = "SELECT count(id) as total FROM validWords WHERE word LIKE ?";
 
-        String sql = "INSERT INTO validWords(id,word) VALUES('" + id + "','" + word + "')";
+    try (Connection conn = DriverManager.getConnection(databaseURL);
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-        try (Connection conn = DriverManager.getConnection(databaseURL);
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+        stmt.setString(1, guess);
+        ResultSet resultRows = stmt.executeQuery();
+
+        if (resultRows.next()) {
+            int result = resultRows.getInt("total");
+            return result >= 1;
         }
 
+        return false;
+
+    } catch (SQLException e) {
+        System.out.println(e.getMessage());
+        return false;
     }
+}
 
-    /**
-     * Possible weakness here?
-     * 
-     * @param guess the string to check if it is a valid word.
-     * @return true if guess exists in the database, false otherwise
-     */
-    public boolean isValidWord(String guess) {
-        String sql = "SELECT count(id) as total FROM validWords WHERE word like'" + guess + "';";
-
-        try (Connection conn = DriverManager.getConnection(databaseURL);
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            ResultSet resultRows = stmt.executeQuery();
-            if (resultRows.next()) {
-                int result = resultRows.getInt("total");
-                return (result >= 1);
-            }
-
-            return false;
-
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
-
-    }
 }
