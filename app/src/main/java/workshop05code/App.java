@@ -16,11 +16,8 @@ import java.util.logging.Logger;
  * @author sqlitetutorial.net
  */
 public class App {
-    // Start code for logging exercise
     static {
-        // must set before the Logger
-        // loads logging.properties from the classpath
-        try {// resources\logging.properties
+        try {
             LogManager.getLogManager().readConfiguration(new FileInputStream("resources/logging.properties"));
         } catch (SecurityException | IOException e1) {
             e1.printStackTrace();
@@ -28,7 +25,6 @@ public class App {
     }
 
     private static final Logger logger = Logger.getLogger(App.class.getName());
-    // End code for logging exercise
     
     /**
      * @param args the command line arguments
