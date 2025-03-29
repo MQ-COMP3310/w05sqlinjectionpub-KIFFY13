@@ -60,19 +60,19 @@ public class SQLiteConnectionManager {
      * @param fileName the database file name
      */
     public void createNewDatabase(String fileName) {
-
         try (Connection conn = DriverManager.getConnection(databaseURL)) {
             if (conn != null) {
                 DatabaseMetaData meta = conn.getMetaData();
                 System.out.println("The driver name is " + meta.getDriverName());
                 System.out.println("A new database has been created.");
-
+                logger.info("Database created with driver: " + meta.getDriverName());
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error creating database.");
+            logger.log(Level.SEVERE, "SQLException in createNewDatabase", e);
         }
     }
-
+    
     /**
      * Check that the file has been cr3eated
      *
@@ -81,6 +81,7 @@ public class SQLiteConnectionManager {
      */
     public boolean checkIfConnectionDefined() {
         if (databaseURL.equals("")) {
+            logger.warning("Database URL is not defined.");
             return false;
         } else {
             try (Connection conn = DriverManager.getConnection(databaseURL)) {
@@ -88,12 +89,13 @@ public class SQLiteConnectionManager {
                     return true;
                 }
             } catch (SQLException e) {
-                System.out.println(e.getMessage());
+                logger.log(Level.SEVERE, "Failed to connect to database in checkIfConnectionDefined", e);
                 return false;
             }
         }
         return false;
     }
+    
 
     /**
      * Create the table structures (2 tables, wordle words and valid words)
@@ -102,22 +104,27 @@ public class SQLiteConnectionManager {
      */
     public boolean createWordleTables() {
         if (databaseURL.equals("")) {
+            logger.warning("Database URL is empty in createWordleTables.");
             return false;
         } else {
             try (Connection conn = DriverManager.getConnection(databaseURL);
-                    Statement stmt = conn.createStatement()) {
+                 Statement stmt = conn.createStatement()) {
+    
                 stmt.execute(WORDLE_DROP_TABLE_STRING);
                 stmt.execute(WORDLE_CREATE_STRING);
                 stmt.execute(VALID_WORDS_DROP_TABLE_STRING);
                 stmt.execute(VALID_WORDS_CREATE_STRING);
+    
+                logger.info("Tables created successfully.");
                 return true;
-
+    
             } catch (SQLException e) {
-                System.out.println(e.getMessage());
+                logger.log(Level.SEVERE, "SQLException while creating tables", e);
                 return false;
             }
         }
     }
+    
 
 /**
  * Take an id and a word and store the pair in the valid words
@@ -135,10 +142,13 @@ public void addValidWord(int id, String word) {
         pstmt.setString(2, word);
         pstmt.executeUpdate();
 
+        logger.fine("Inserted word into validWords: " + word);
+
     } catch (SQLException e) {
-        System.out.println(e.getMessage());
+        logger.log(Level.SEVERE, "Failed to insert word into validWords: " + word, e);
     }
 }
+
 
 
     /**
@@ -158,13 +168,14 @@ public boolean isValidWord(String guess) {
 
         if (resultRows.next()) {
             int result = resultRows.getInt("total");
+            logger.fine("Word checked: " + guess + " | Found: " + (result >= 1));
             return result >= 1;
         }
 
         return false;
 
     } catch (SQLException e) {
-        System.out.println(e.getMessage());
+        logger.log(Level.SEVERE, "Failed to check if word is valid: " + guess, e);
         return false;
     }
 }
